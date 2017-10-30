@@ -52,6 +52,7 @@ module memory_stage(
     input  wire  [ 4:0]  RegWaddr_EXE_MEM,
     input  wire  [31:0] ALUResult_EXE_MEM,
     input  wire  [31:0]  MemWdata_EXE_MEM,
+    input  wire  [31:0] RegRdata2_EXE_MEM, //new
     input  wire  [31:0]        PC_EXE_MEM,
     // interaction with the data_sram
     output wire  [31:0]      MemWdata_MEM,
@@ -72,6 +73,7 @@ module memory_stage(
     // output data to WB stage
     output reg   [ 4:0]   RegWaddr_MEM_WB,
     output reg   [31:0]  ALUResult_MEM_WB,
+    output reg   [31:0]  RegRdata2_MEM_WB, //new
     output reg   [31:0]         PC_MEM_WB,
 //    output wire  [31:0]   MemRdata_MEM_WB
     output wire  [31:0]     ALUResult_MEM   //Bypass
@@ -93,6 +95,7 @@ module memory_stage(
         MemToReg_MEM_WB  <=  MemToReg_EXE_MEM;
         RegWrite_MEM_WB  <=  RegWrite_EXE_MEM;
         ALUResult_MEM_WB <= ALUResult_EXE_MEM;
+        RegRdata2_MEM_WB <= RegRdata2_EXE_MEM;
         MFHL_MEM_WB      <=      MFHL_EXE_MEM;
         LB_MEM_WB        <=        LB_EXE_MEM;
         LBU_MEM_WB       <=       LBU_EXE_MEM;
@@ -102,7 +105,7 @@ module memory_stage(
 
     end
     else
-        {PC_MEM_WB, RegWaddr_MEM_WB, MemToReg_MEM_WB, RegWrite_MEM_WB, ALUResult_MEM_WB, MFHL_MEM_WB, LB_MEM_WB, LBU_MEM_WB, LH_MEM_WB, LHU_MEM_WB, LW_MEM_WB} <= 'd0;
+        {PC_MEM_WB, RegWaddr_MEM_WB, MemToReg_MEM_WB, RegWrite_MEM_WB, ALUResult_MEM_WB, RegRdata2_MEM_WB, MFHL_MEM_WB, LB_MEM_WB, LBU_MEM_WB, LH_MEM_WB, LHU_MEM_WB, LW_MEM_WB} <= 'd0;
 
 //always @(*) if (MemEn_MEM & (|MemWrite_MEM)) $display ("Store!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 //    assign MemRdata_MEM_WB  = data_sram_rdata;

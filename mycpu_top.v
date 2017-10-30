@@ -114,6 +114,8 @@ wire                LH_ID_EXE; //new
 wire               LHU_ID_EXE; //new
 wire [ 1:0]         LW_ID_EXE; //new
 wire [ 1:0]         SW_ID_EXE; //new
+wire                SB_ID_EXE; //new
+wire                SH_ID_EXE; //new
 
 //wire [ 4:0]         Rt_ID_EXE;
 //wire [ 4:0]         Rd_ID_EXE;
@@ -145,6 +147,7 @@ wire [31:0] ALUResult_EXE_MEM;
 wire [31:0]  MemWdata_EXE_MEM;
 wire [31:0]        PC_EXE_MEM;
 wire [31:0] RegRdata1_EXE_MEM;
+wire [31:0] RegRdata2_EXE_MEM;
 
 wire          MemToReg_MEM_WB;
 wire [ 3:0]   RegWrite_MEM_WB;
@@ -158,6 +161,7 @@ wire [ 1:0]         LW_MEM_WB; //new
 
 
 wire [31:0]  ALUResult_MEM_WB;
+wire [31:0]  RegRdata2_MEM_WB; //new
 //wire [31:0]   MemRdata_MEM_WB;
 wire [31:0]         PC_MEM_WB;
 wire [31:0]             PC_WB;
@@ -257,6 +261,8 @@ decode_stage de_stage(
     .LHU_ID_EXE        (       LHU_ID_EXE), // O  1 new
     .LW_ID_EXE         (        LW_ID_EXE), // O  2 new
     .SW_ID_EXE         (        SW_ID_EXE), // O  2 new
+    .SB_ID_EXE         (        SB_ID_EXE), // O  1 new
+    .SH_ID_EXE         (        SH_ID_EXE), // O  1 new
 //    .Rt_ID_EXE         (        Rt_ID_EXE), // O  5
 //    .Rd_ID_EXE         (        Rd_ID_EXE), // O  5
     .RegWaddr_ID_EXE   (  RegWaddr_ID_EXE), // O  5
@@ -303,6 +309,8 @@ execute_stage exe_stage(
     .LHU_ID_EXE        (       LHU_ID_EXE), // I  1 new
     .LW_ID_EXE         (        LW_ID_EXE), // I  2 new
     .SW_ID_EXE         (        SW_ID_EXE), // I  2 new
+    .SB_ID_EXE         (        SB_ID_EXE), // I  1 new
+    .SH_ID_EXE         (        SH_ID_EXE), // I  1 new
     .MemEn_EXE_MEM     (    MemEn_EXE_MEM), // O  1
     .MemToReg_EXE_MEM  ( MemToReg_EXE_MEM), // O  1
     .MemWrite_EXE_MEM  ( MemWrite_EXE_MEM), // O  4
@@ -321,6 +329,7 @@ execute_stage exe_stage(
     .MemWdata_EXE_MEM  ( MemWdata_EXE_MEM), // O 32
     .PC_EXE_MEM        (       PC_EXE_MEM), // O 32
     .RegRdata1_EXE_MEM (RegRdata1_EXE_MEM), // O 32
+    .RegRdata2_EXE_MEM (RegRdata2_EXE_MEM), // O 32 new
     .ALUResult_EXE     (    ALUResult_EXE)  // O 32
     );
 
@@ -335,6 +344,7 @@ memory_stage mem_stage(
     .RegWaddr_EXE_MEM  ( RegWaddr_EXE_MEM), // I  5
     .ALUResult_EXE_MEM (ALUResult_EXE_MEM), // I 32
     .MemWdata_EXE_MEM  ( MemWdata_EXE_MEM), // I 32
+    .RegRdata2_EXE_MEM (RegRdata2_EXE_MEM), // I 32 new
     .PC_EXE_MEM        (       PC_EXE_MEM), // I 32
     .MFHL_EXE_MEM      (     MFHL_EXE_MEM), // I  2
     .LB_EXE_MEM        (       LB_EXE_MEM), // I  1 new
@@ -356,6 +366,7 @@ memory_stage mem_stage(
     .LW_MEM_WB         (        LW_MEM_WB), // O  2 new
     .RegWaddr_MEM_WB   (  RegWaddr_MEM_WB), // O  5
     .ALUResult_MEM_WB  ( ALUResult_MEM_WB), // O 32
+    .RegRdata2_MEM_WB  ( RegRdata2_MEM_WB), // O 32 new
     .PC_MEM_WB         (        PC_MEM_WB), // O 32
     .MFHL_MEM_WB       (      MFHL_MEM_WB), // O  2
 //    .MemRdata_MEM_WB   (  MemRdata_MEM_WB)  // O 32
@@ -376,6 +387,7 @@ writeback_stage wb_stage(
     .LW_MEM_WB         (        LW_MEM_WB), // I  2 new
     .RegWaddr_MEM_WB   (  RegWaddr_MEM_WB), // I  5
     .ALUResult_MEM_WB  ( ALUResult_MEM_WB), // I 32
+    .RegRdata2_MEM_WB  ( RegRdata2_MEM_WB), // I 32 new
     .MemRdata_MEM_WB   (  data_sram_rdata), // I 32
     .PC_MEM_WB         (        PC_MEM_WB), // I 32
     .HI_MEM_WB         (           HI_out), // I 32

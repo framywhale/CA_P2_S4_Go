@@ -26,7 +26,9 @@ module Control_Unit(
     output wire [1:0] MFHL,
     output wire [1:0] MTHL,
     output wire [1:0] LW,
-    output wire [1:0] SW
+    output wire [1:0] SW,
+    output wire       SB,
+    output wire       SH
   );
 ///////////////////////////////////////////////////////
 //              Instruction compare                  //
@@ -100,13 +102,18 @@ wire inst_swl    = (op == 6'b101110);
 ///////////////////////////////////////////////////////////////////////////////
 //                        Control signal assignment                          //
 ///////////////////////////////////////////////////////////////////////////////
-assign MemToReg   = ~rst &   inst_lw;
+assign MemToReg   = ~rst &  (inst_lw   | inst_lb    | inst_lbu  | inst_lh     |
+                             inst_lhu  | inst_lwl   | inst_lwr  );
 assign JSrc       = ~rst &  (inst_jr   | inst_jalr  );
-assign MemEn      = ~rst &  (inst_sw   | inst_lw    );
+assign MemEn      = ~rst &  (inst_sw   | inst_lw    | inst_lb   | inst_lbu    |
+                             inst_lh   | inst_lhu   | inst_lwl  | inst_lwr    | 
+                             inst_sb   | inst_sh    | inst_swl  | inst_swr    );
 assign is_rs_read = ~rst & ~(inst_j    | inst_jal   );
 assign is_rt_read = ~rst & ~(inst_addi | inst_addiu | inst_slti | inst_sltiu  |
                              inst_andi | inst_lui   | inst_ori  | inst_xori   |
-                             inst_j    | inst_jal   | inst_lw   | inst_jalr   );
+                             inst_j    | inst_jal   | inst_lw   | inst_jalr   |
+                             inst_lb   | inst_lbu   | inst_lh   | inst_lhu    |
+                             inst_lwl  | inst_lwr   );
 
 assign is_branch  = ~rst &  (inst_bne  | inst_blez  | inst_bgez | inst_bgezal |
                              inst_beq  | inst_bltz  | inst_bgtz | inst_bltzal );
@@ -124,7 +131,10 @@ assign ALUSrcB[1] = ~rst & (inst_jal    | inst_ori   | inst_xori   |
 assign ALUSrcB[0] = ~rst & (inst_lw     | inst_sw    | inst_addiu  |
                             inst_slti   | inst_sltiu | inst_lui    |
                             inst_addi   | inst_andi  | inst_ori    |
-                            inst_xori   );
+                            inst_xori   | inst_lb    | inst_lbu    |
+                            inst_lh     | inst_lhu   | inst_sb     |
+                            inst_sh     | inst_swl   | inst_swr    |
+                            inst_lwl    | inst_lwr   );
 
 assign RegDst[1]  = ~rst & (inst_jal    | inst_bgezal | inst_bltzal );
 assign RegDst[0]  = ~rst & (inst_addu   | inst_or     | inst_slt    |
@@ -146,13 +156,15 @@ assign RegWrite = {4{~rst & (inst_lw    | inst_addiu  | inst_slti  |
                             inst_sllv   | inst_sra    | inst_srav  |
                             inst_srl    | inst_srlv   | inst_jalr  |
                             inst_bltzal | inst_bgezal | inst_mfhi  |
-                            inst_mflo   )}};
+                            inst_mflo   | inst_lb     | inst_lbu   |
+                            inst_lh     | inst_lhu    | inst_lwl   |
+                            inst_lwr    )}};
 
 
-assign MemWrite[3] = ~rst & (inst_sw);
-assign MemWrite[2] = ~rst & (inst_sw);
-assign MemWrite[1] = ~rst & (inst_sw | inst_sh );
-assign MemWrite[0] = ~rst & (inst_sw | inst_sb | inst_sh);
+assign MemWrite[3] = ~rst & (inst_sw | inst_swl | inst_swr);
+assign MemWrite[2] = ~rst & (inst_sw | inst_swl | inst_swr);
+assign MemWrite[1] = ~rst & (inst_sw | inst_sh  | inst_swl | inst_swr);
+assign MemWrite[0] = ~rst & (inst_sw | inst_sb  | inst_sh  | inst_swl | inst_swr);
 
 // ALUop control signal
 assign ALUop[3] = ~rst & (inst_xori   | inst_nor  | inst_xor    |
@@ -168,7 +180,10 @@ assign ALUop[1] = ~rst & (inst_lw     | inst_sw   | inst_addiu  |
                           inst_xori   | inst_add  | inst_sub    |
                           inst_xor    | inst_sra  | inst_srav   |
                           inst_subu   | inst_jalr | inst_bgezal |
-                          inst_bltzal );
+                          inst_bltzal | inst_lb   | inst_lbu    |
+                          inst_lh     | inst_lhu  | inst_lwl    |
+                          inst_lwr    | inst_sb   | inst_sh     |
+                          inst_swl    | inst_swr  );
 assign ALUop[0] = ~rst & (inst_slti   | inst_slt  | inst_or     |
                           inst_lui    | inst_sll  | inst_ori    |
                           inst_nor    | inst_sllv | inst_sra    |
@@ -203,5 +218,8 @@ assign LW[0] = inst_lwr | inst_lw;
 
 assign SW[1] = inst_swl | inst_sw;
 assign SW[0] = inst_swr | inst_sw;
+
+assign SB = inst_sb;
+assign SH = inst_sh;
 
 endmodule

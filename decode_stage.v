@@ -89,6 +89,8 @@ module decode_stage(
     output reg               LHU_ID_EXE,  //new
     output reg  [ 1:0]        LW_ID_EXE,  //new
     output reg  [ 1:0]        SW_ID_EXE,  //new
+    output reg                SB_ID_EXE,  //new
+    output reg                SH_ID_EXE,  //new
 
     // data transfering to EXE stage
 //    output reg  [ 4:0]        Rt_ID_EXE,
@@ -139,6 +141,8 @@ module decode_stage(
     wire                  LHU_ID;
     wire [ 1:0]            LW_ID;
     wire [ 1:0]            SW_ID;
+    wire                   SB_ID;
+    wire                   SH_ID;
 
     // temp, intend to remember easily
 
@@ -182,7 +186,7 @@ module decode_stage(
 
     always @(posedge clk) begin
     if (rst) begin
-    {MemEn_ID_EXE, MemToReg_ID_EXE, ALUop_ID_EXE, RegWrite_ID_EXE, MemWrite_ID_EXE, ALUSrcA_ID_EXE, ALUSrcB_ID_EXE, MULT_ID_EXE, DIV_ID_EXE, MFHL_ID_EXE, MTHL_ID_EXE, LB_ID_EXE, LBU_ID_EXE, LH_ID_EXE, LHU_ID_EXE, LW_ID_EXE, SW_ID_EXE,
+    {MemEn_ID_EXE, MemToReg_ID_EXE, ALUop_ID_EXE, RegWrite_ID_EXE, MemWrite_ID_EXE, ALUSrcA_ID_EXE, ALUSrcB_ID_EXE, MULT_ID_EXE, DIV_ID_EXE, MFHL_ID_EXE, MTHL_ID_EXE, LB_ID_EXE, LBU_ID_EXE, LH_ID_EXE, LHU_ID_EXE, LW_ID_EXE, SW_ID_EXE, SB_ID_EXE, SH_ID_EXE,
          RegWaddr_ID_EXE, Sa_ID_EXE, PC_ID_EXE, PC_add_4_ID_EXE, RegRdata1_ID_EXE, RegRdata2_ID_EXE, SgnExtend_ID_EXE, ZExtend_ID_EXE} <= 'd0;
      end
      else
@@ -206,6 +210,8 @@ module decode_stage(
             LHU_ID_EXE  <=      LHU_ID;
              LW_ID_EXE  <=       LW_ID;
              SW_ID_EXE  <=       SW_ID;
+             SB_ID_EXE  <=       SB_ID;
+             SH_ID_EXE  <=       SH_ID;
 
 
         // data transfering to EXE stage
@@ -221,10 +227,10 @@ module decode_stage(
           ZExtend_ID_EXE <=           ZExtend_ID;
     end
     else if (~(|DIV_ID_EXE))
-    {MemEn_ID_EXE, MemToReg_ID_EXE, ALUop_ID_EXE, RegWrite_ID_EXE, MemWrite_ID_EXE, ALUSrcA_ID_EXE, ALUSrcB_ID_EXE, MULT_ID_EXE, DIV_ID_EXE, MFHL_ID_EXE, MTHL_ID_EXE, LB_ID_EXE, LBU_ID_EXE, LH_ID_EXE, LHU_ID_EXE, LW_ID_EXE, SW_ID_EXE,
+    {MemEn_ID_EXE, MemToReg_ID_EXE, ALUop_ID_EXE, RegWrite_ID_EXE, MemWrite_ID_EXE, ALUSrcA_ID_EXE, ALUSrcB_ID_EXE, MULT_ID_EXE, DIV_ID_EXE, MFHL_ID_EXE, MTHL_ID_EXE, LB_ID_EXE, LBU_ID_EXE, LH_ID_EXE, LHU_ID_EXE, LW_ID_EXE, SW_ID_EXE, SB_ID_EXE, SH_ID_EXE,
      RegWaddr_ID_EXE, Sa_ID_EXE, PC_ID_EXE, PC_add_4_ID_EXE, RegRdata1_ID_EXE, RegRdata2_ID_EXE, SgnExtend_ID_EXE, ZExtend_ID_EXE} <= 'd0;
      else if (~DIV_Complete) begin
-     {MemEn_ID_EXE, MemToReg_ID_EXE, ALUop_ID_EXE, RegWrite_ID_EXE, MemWrite_ID_EXE, ALUSrcA_ID_EXE, ALUSrcB_ID_EXE, MULT_ID_EXE, MFHL_ID_EXE, MTHL_ID_EXE, LB_ID_EXE, LBU_ID_EXE, LH_ID_EXE, LHU_ID_EXE, LW_ID_EXE, SW_ID_EXE,
+     {MemEn_ID_EXE, MemToReg_ID_EXE, ALUop_ID_EXE, RegWrite_ID_EXE, MemWrite_ID_EXE, ALUSrcA_ID_EXE, ALUSrcB_ID_EXE, MULT_ID_EXE, MFHL_ID_EXE, MTHL_ID_EXE, LB_ID_EXE, LBU_ID_EXE, LH_ID_EXE, LHU_ID_EXE, LW_ID_EXE, SW_ID_EXE, SB_ID_EXE, SH_ID_EXE,
           RegWaddr_ID_EXE, Sa_ID_EXE, PC_ID_EXE, PC_add_4_ID_EXE, SgnExtend_ID_EXE, ZExtend_ID_EXE} <= 'd0;
      DIV_ID_EXE <= DIV_ID_EXE;
      RegRdata1_ID_EXE <= RegRdata1_ID_EXE;
@@ -266,7 +272,9 @@ module decode_stage(
         .LH        (            LH_ID),
         .LHU       (           LHU_ID),
         .LW        (            LW_ID),
-        .SW        (            SW_ID)
+        .SW        (            SW_ID),
+        .SB        (            SB_ID),
+        .SH        (            SH_ID)
 
     );
     MUX_4_32 RegRdata1_MUX(

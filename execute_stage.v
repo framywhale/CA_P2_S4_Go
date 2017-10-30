@@ -67,6 +67,8 @@ module execute_stage(
     input  wire               LHU_ID_EXE, //new
     input  wire [ 1:0]         LW_ID_EXE, //new
     input  wire [ 1:0]         SW_ID_EXE, //new
+    input  wire                SB_ID_EXE, //new
+    input  wire                SH_ID_EXE, //new
 
     // control signals passing to MEM stage
     output reg             MemEn_EXE_MEM,
@@ -88,6 +90,7 @@ module execute_stage(
     output reg  [31:0]  MemWdata_EXE_MEM,
     output reg  [31:0]        PC_EXE_MEM,
     output reg  [31:0] RegRdata1_EXE_MEM,
+    output reg  [31:0] RegRdata2_EXE_MEM,
 
     output wire [31:0] ALUResult_EXE,
     output wire [ 3:0] RegWrite_EXE
@@ -128,11 +131,12 @@ module execute_stage(
         MemWdata_EXE_MEM  <= MemWdata;
         PC_EXE_MEM        <= PC_ID_EXE;
         RegRdata1_EXE_MEM <= RegRdata1_ID_EXE;
+        RegRdata2_EXE_MEM <= RegRdata2_ID_EXE;
 
     end
     else
         {MemEn_EXE_MEM, MemToReg_EXE_MEM, MemWrite_EXE_MEM, RegWrite_EXE_MEM, RegWaddr_EXE_MEM, MULT_EXE_MEM, MFHL_EXE_MEM, MTHL_EXE_MEM, LB_EXE_MEM, LBU_EXE_MEM, LH_EXE_MEM, LHU_EXE_MEM, LW_EXE_MEM,
-           ALUResult_EXE_MEM, MemWdata_EXE_MEM, PC_EXE_MEM, RegRdata1_EXE_MEM} <= 'd0;
+           ALUResult_EXE_MEM, MemWdata_EXE_MEM, PC_EXE_MEM, RegRdata1_EXE_MEM, RegRdata2_EXE_MEM} <= 'd0;
 
     MUX_4_32 ALUA_MUX(
         .Src1   (RegRdata1_ID_EXE),
@@ -176,6 +180,8 @@ module execute_stage(
 
     MemWrite_Sel MemW (
          .MemWrite_ID_EXE (    MemWrite_ID_EXE),
+         .SB_ID_EXE       (          SB_ID_EXE),
+         .SH_ID_EXE       (          SH_ID_EXE),
          .SW_ID_EXE       (          SW_ID_EXE),
          .vaddr           ( ALUResult_EXE[1:0]),
          .MemWrite        (     MemWrite_Final)
@@ -232,17 +238,20 @@ module RegWrite_Sel(
 
 //Generated directly from the truth table
 
-    assign RegWrite = LW_ID_EXE == 2'b10 ? RegW_L : (LW_ID_EXE == 2'b01 ? RegW_R : RegWrite);
+    assign RegWrite = RegWrite_ID_EXE;//(LW_ID_EXE == 2'b10) ? RegW_L : ((LW_ID_EXE == 2'b01) ? RegW_R : RegWrite_ID_EXE);
 endmodule
 
 module MemWrite_Sel(
     input  [3:0] MemWrite_ID_EXE,
     input  [1:0]       SW_ID_EXE,
+    input              SB_ID_EXE,
+    input              SH_ID_EXE,
     input  [1:0]           vaddr,
     output [3:0]        MemWrite
 );
-    wire [3:0] MemW_L, MemW_R;
-
+    wire [3:0] MemW_L, MemW_R, MemW_SB, MemW_SH;
+    wire [3:0] v;
+    
     assign MemW_L[3] = &vaddr;
     assign MemW_L[2] = vaddr[1];
     assign MemW_L[1] = |vaddr;
@@ -252,10 +261,27 @@ module MemWrite_Sel(
     assign MemW_R[2] = ~(&vaddr);
     assign MemW_R[1] = ~vaddr[1];
     assign MemW_R[0] = ~(|vaddr);
-
+    
+    assign v[3] =  vaddr[1] &  vaddr[0];
+    assign v[2] =  vaddr[1] & ~vaddr[0];
+    assign v[1] = ~vaddr[1] &  vaddr[0];
+    assign v[0] = ~vaddr[1] & ~vaddr[0];
+    
+    assign MemW_SB = {4{v[0]}} & 4'b0001 |
+                     {4{v[1]}} & 4'b0010 |
+                     {4{v[2]}} & 4'b0100 |
+                     {4{v[3]}} & 4'b1000 ;
+                     
+    assign MemW_SH = {4{v[0]}} & 4'b0011 |
+                     {4{v[2]}} & 4'b1100 ; 
+                                         
 //Generated directly from the truth table
 
-    assign MemWrite = SW_ID_EXE == 2'b10 ? MemW_L : (SW_ID_EXE == 2'b01 ? MemW_R : MemWrite);
+    assign MemWrite = (SW_ID_EXE == 2'b10) ? MemW_L : 
+                      (SW_ID_EXE == 2'b01) ? MemW_R :
+                      (SW_ID_EXE == 2'b11) ? MemWrite_ID_EXE :
+                       SB_ID_EXE           ? MemW_SB :
+                       SH_ID_EXE           ? MemW_SH : MemWrite_ID_EXE;
 endmodule
 
 module Store_sel(
@@ -264,9 +290,10 @@ module Store_sel(
     input  wire [31:0] Rt_read_data,
     output wire [31:0] MemWdata
   );
-  wire swr = SW[0];
-  wire swl = SW[1];
+  wire swr = SW[0] & ~SW[1];
+  wire swl = SW[1] & ~SW[0];
   wire sw  = &SW;
+  wire ns  = ~(|SW);
 
   wire [31:0] swr_1,swr_2,swr_3,swr_4,swr_data;
   wire [31:0] swl_1,swl_2,swl_3,swl_4,swl_data;
@@ -293,6 +320,7 @@ module Store_sel(
 
   assign MemWdata = ({32{sw }} & Rt_read_data) |
                     ({32{swl}} & swl_data    ) |
-                    ({32{swr}} & swr_data    ) ;
+                    ({32{swr}} & swr_data    ) |
+                    ({32{ns }} & Rt_read_data) ;
 
 endmodule
